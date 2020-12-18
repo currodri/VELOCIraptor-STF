@@ -141,7 +141,7 @@ Int_t OpenMPLocalSearch(Options &opt,
         ngtot += ng;
 
 	js_count++;
-	cout<<"		3DFOF Log - "<<i<<" th / "<<js_count<<" of "<<numompregions<<" / # ptcls : "<<ompdomain[i].ncount<<" / # groups : "<<ng<<" / Time [s] : "<<MyGetTime() - js_time<<endl;
+	//cout<<"		3DFOF Log - "<<i<<" th / "<<js_count<<" of "<<numompregions<<" / # ptcls : "<<ompdomain[i].ncount<<" / # groups : "<<ng<<" / Time [s] : "<<MyGetTime() - js_time<<endl;
     }
     }
     cout<<ThisTask<<" finished local search "<<ngtot<<" in "<<MyGetTime()-time1<<endl;
