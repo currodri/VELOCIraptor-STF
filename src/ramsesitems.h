@@ -24,7 +24,7 @@
 #define RAMSESINTTYPE int 
 
 ///number of particle types
-#define NRAMSESTYPE 5
+#define NRAMSESTYPE 6
 ///define gadget particle types
 //@{
 #define RAMSESGASTYPE 0
@@ -32,6 +32,7 @@
 #define RAMSESSTARTYPE 2
 #define RAMSESBHTYPE 3
 #define RAMSESSINKTYPE 4
+#define RAMSESTRACERTYPE 5
 //@}
 
 ///how many particle properties are read from file in one go

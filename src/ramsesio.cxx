@@ -82,11 +82,10 @@ Int_t RAMSES_get_nbodies(char *fname, int ptype, Options &opt)
     double * dummy_age, * dummy_mass;
     double dmp_mass;
     double OmegaM, OmegaB;
-    int totalghost = 0;
-    int totalstars = 0;
-    int totaldm    = 0;
-    int alltotal   = 0;
-    int ghoststars = 0;
+    int totalstars   = 0;
+    int totaldm      = 0;
+    int alltotal     = 0;
+    int totaltracers = 0;
     string stringbuf;
     int ninputoffset = 0;
     sprintf(buf1,"%s/amr_%s.out00001",fname,opt.ramsessnapname);
@@ -308,9 +307,10 @@ Int_t RAMSES_get_nbodies(char *fname, int ptype, Options &opt)
         else if (FileExists(buf2)) sprintf(buf,"%s",buf2);
         Framses.open(buf, ios::binary|ios::in);
 
-        ramses_header_info.npart[RAMSESDMTYPE]   = 0;
-        ramses_header_info.npart[RAMSESSTARTYPE] = 0;
-        ramses_header_info.npart[RAMSESSINKTYPE] = 0;
+        ramses_header_info.npart[RAMSESDMTYPE]     = 0;
+        ramses_header_info.npart[RAMSESSTARTYPE]   = 0;
+        ramses_header_info.npart[RAMSESSINKTYPE]   = 0;
+        ramses_header_info.npart[RAMSESTRACERTYPE] = 0;
 
         //number of cpus
         Framses.read((char*)&dummy, sizeof(dummy));
@@ -327,8 +327,9 @@ Int_t RAMSES_get_nbodies(char *fname, int ptype, Options &opt)
         Framses.read((char*)&ramses_header_info.npartlocal, sizeof(int));
         Framses.read((char*)&dummy, sizeof(dummy));
 
-        // Random seeds
+        // Random seeds & tracer_seed
         Framses.read((char*)&dummy, sizeof(dummy));
+        Framses.seekg(dummy,ios::cur);
         Framses.seekg(dummy,ios::cur);
         Framses.read((char*)&dummy, sizeof(dummy));
 
@@ -366,6 +367,7 @@ Int_t RAMSES_get_nbodies(char *fname, int ptype, Options &opt)
         dummy_age  = new double [ramses_header_info.npartlocal];
 
         // Read Mass
+        //necessary to separate star particles from tracers
         Framses.read((char*)&dummy, sizeof(dummy));
         Framses.read((char*)&dummy_mass[0], dummy);
         Framses.read((char*)&dummy, sizeof(dummy));
@@ -380,36 +382,46 @@ Int_t RAMSES_get_nbodies(char *fname, int ptype, Options &opt)
         Framses.seekg(dummy,ios::cur);
         Framses.read((char*)&dummy, sizeof(dummy));
 
+        // Skip family
+        Framses.read((char*)&dummy, sizeof(dummy));
+        Framses.seekg(dummy,ios::cur);
+        Framses.read((char*)&dummy, sizeof(dummy));
+
+        // Skip tag
+        Framses.read((char*)&dummy, sizeof(dummy));
+        Framses.seekg(dummy,ios::cur);
+        Framses.read((char*)&dummy, sizeof(dummy));
+
         // Read Birth epoch
-        //necessary to separate ghost star particles with negative ages from real one
+        //necessary to separate star particles from DM particles
         Framses.read((char*)&dummy, sizeof(dummy));
         Framses.read((char*)&dummy_age[0], dummy);
         Framses.read((char*)&dummy, sizeof(dummy));
 
-        ghoststars = 0;
         for (j = 0; j < ramses_header_info.npartlocal; j++)
         {
-            if (fabs((dummy_mass[j]-dmp_mass)/dmp_mass) < 1e-5)
-                ramses_header_info.npart[RAMSESDMTYPE]++;
+            if (dummy_mass[j] == 0.0)
+                ramses_header_info.npart[RAMSESTRACERTYPE]++;
             else
                 if (dummy_age[j] != 0.0)
                     ramses_header_info.npart[RAMSESSTARTYPE]++;
                 else
-                ghoststars++;
+                    ramses_header_info.npart[RAMSESDMTYPE]++;
         }
         delete [] dummy_age;
         delete [] dummy_mass;
         Framses.close();
 
-        totalghost += ghoststars;
-        totalstars += ramses_header_info.npart[RAMSESSTARTYPE];
-        totaldm    += ramses_header_info.npart[RAMSESDMTYPE];
-        alltotal   += ramses_header_info.npartlocal;
+        totaltracers += ramses_header_info.npart[RAMSESTRACERTYPE];
+        totalstars   += ramses_header_info.npart[RAMSESSTARTYPE];
+        totaldm      += ramses_header_info.npart[RAMSESDMTYPE];
+        alltotal     += ramses_header_info.npartlocal;
 
         //now with information loaded, set totals
         ramses_header_info.npartTotal[RAMSESDMTYPE]+=ramses_header_info.npart[RAMSESDMTYPE];
         ramses_header_info.npartTotal[RAMSESSTARTYPE]+=ramses_header_info.npart[RAMSESSTARTYPE];
         ramses_header_info.npartTotal[RAMSESSINKTYPE]+=ramses_header_info.npart[RAMSESSINKTYPE];
+        ramses_header_info.npartTotal[RAMSESTRACERTYPE]+=ramses_header_info.npart[RAMSESTRACERTYPE];
     }
     for(j=0, nbodies=0; j<nusetypes; j++) {
         k=usetypes[j];
